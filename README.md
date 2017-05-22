@@ -23,3 +23,28 @@ On Windows, [_wfopen](https://msdn.microsoft.com/en-us/library/yeby3zcb.aspx) is
 On macOS, the path is internally converted from HFS to POSIX.
 
 Unlike the original functions, the plugin works with BLOBs, not ANSI text.
+
+## Example 
+
+```
+$path:=System folder(Desktop)+"test.txt"
+
+$fp:=fopen ($path;"w+")
+
+CONVERT FROM TEXT("abcdefghijklmnop";"utf-8";$data)
+$written:=fwrite ($fp;$data)
+
+$err:=fgetpos ($fp;$pos)
+
+$err:=fsetpos ($fp;5)
+CLEAR VARIABLE($data)
+$read:=fread ($fp;$data)  //read to end of file (11 bytes)
+$text:=Convert to text($data;"utf-8")  //fghijklmnop
+
+$err:=fsetpos ($fp;0)
+CLEAR VARIABLE($data)
+$read:=fread ($fp;$data;5)  //read 5 bytes
+$text:=Convert to text($data;"utf-8")  //abcde
+
+fclose ($fp)
+```
