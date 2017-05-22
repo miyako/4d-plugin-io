@@ -48,3 +48,56 @@ $text:=Convert to text($data;"utf-8")  //abcde
 
 fclose ($fp)
 ```
+
+## Syntax
+
+```
+file:=fopen (path;mode)
+```
+
+Parameter|Type|Description
+------------|------------|----
+path|TEXT|
+mode|TEXT|
+file|LONGINT|
+
+```
+fclose  (file)
+```
+
+Parameter|Type|Description
+------------|------------|----
+file|LONGINT|
+
+```
+error:=fsetpos (file;pos)
+error:=fsetpos (file;pos)
+```
+
+Parameter|Type|Description
+------------|------------|----
+file|LONGINT|
+pos|LONGINT|
+error|LONGINT|
+
+```
+read:=fread (file;data{;length})
+```
+
+Parameter|Type|Description
+------------|------------|----
+file|LONGINT|
+data|BLOB|
+length|LONGINT|
+read|LONGINT|
+
+
+```
+written:=fwrite (file;data)
+```
+
+Parameter|Type|Description
+------------|------------|----
+file|LONGINT|
+data|BLOB|
+written|LONGINT|
