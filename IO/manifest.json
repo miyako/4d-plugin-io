@@ -1,0 +1,1 @@
+﻿{"name":"IO","id":20000,"commands":[{"theme":"Stream I/O","syntax":"fopen(&T;&T):L"},{"theme":"Stream I/O","syntax":"fclose(&L)"},{"theme":"Stream I/O","syntax":"fwrite(&L;&O):L"},{"theme":"Stream I/O","syntax":"fread(&L;&O;&L):L"},{"theme":"Stream I/O","syntax":"fgetpos(&L;&L):L"},{"theme":"Stream I/O","syntax":"fsetpos(&L;&L):L"}]}
