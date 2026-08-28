@@ -23,9 +23,9 @@ permissions:
 
 env:
   # ---- edit these per-project, everything else is generic ----
-  PRODUCT_NAME: TZ
-  XCODE_PROJECT: TZ.xcodeproj
-  VCX_SOLUTION: TZ.sln
+  PRODUCT_NAME: IO
+  XCODE_PROJECT: IO.xcodeproj
+  VCX_SOLUTION: IO.sln
   MACOS_DEPLOYMENT_TARGET: '10.13'
   # --------------------------------------------------------------
 
