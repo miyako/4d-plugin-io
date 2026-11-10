@@ -1,6 +1,83 @@
 # 4d-plugin-io
 Replica of deprecated "Pack" commands 
 
+## Native ownership maintenance
+
+The bounded audit baseline is `edb67437c40c510450893291dbcf606846c091f1`.
+Both Visual Studio projects and the Xcode sources phase compile `4DPlugin.cpp`,
+the complete `4DPluginAPI.c`, and all 16 wrapper implementations. Their headers
+are transitively included by `4DPluginAPI.h`; `C_TYPES.h` supplies string types
+and platform imports. The native inventory comprises:
+
+| Surface | Ownership finding |
+|---|---|
+| `4DPlugin.cpp`, `4DPlugin.h`, prefix header | `FourDPackex` calls `PluginMain`; selectors 1-6 implement fopen/fclose/fwrite/fread/fgetpos/fsetpos, matching both tracked manifests. No exported text arrays or picture commands. Scalar text inputs are copied by `C_TEXT`. Lifecycle helpers are not dispatched by the existing switch. |
+| `C_TEXT.cpp/.h`, `ARRAY_TEXT.cpp/.h` | Borrowed parameter/array strings are copied into C++ strings. Scalar output uses the engine content setter; array output independently creates each string and transfers accepted assignments without local disposal. Normal replacement/shrink/clear are covered; failure boundaries below are not certified. |
+| `C_PICTURE.cpp/.h` | Compiled but dormant from the current dispatcher. Fixed path alias double disposal, overwritten initialized string/picture owners, missing command-output clear after retain, and unreleased setBytes temporary. UTF-16 conversion bytes are divided by sizeof(PA_Unichar). Synchronous borrowed input detachment and owning picture returns are preserved. |
+| `C_BLOB.cpp/.h` | Copies borrowed bytes into a vector and hands new handles to parameters/results. Text conversions use copied `C_TEXT` content; unrelated BLOB allocation-failure behavior is unchanged. |
+| `C_POINTER.cpp/.h` | Compiled metadata wrapper; `PA_GetPointerValue` metadata/ownership interpretation is deferred, not blindly cleared. |
+| `C_DATE`, `C_INTEGER`, `C_LONGINT`, `C_REAL`, `C_TIME` (`.cpp/.h`) | Scalar-only storage/access; no native string ownership. |
+| `ARRAY_BOOLEAN`, `ARRAY_DATE`, `ARRAY_INTEGER`, `ARRAY_LONGINT`, `ARRAY_REAL`, `ARRAY_TIME` (`.cpp/.h`) | Numeric/date storage and array publication; no string owner cleanup. Initial creation/resize failure behavior is unchanged. |
+| `4DPluginAPI.h/.c/.def`, `EntryPoints.h`, `Flags.h`, `PrivateTypes.h`, `PublicTypes.h`, `C_TYPES.h` | Bundled ABI, engine forwarding, exports and platform types inspected, unchanged. No object/collection/JSON first-party callback surface in this bundle. |
+
+### Bundled contracts and provenance
+
+The compiled SDK implementation has SHA-256
+`2721c3d4338cc2a350599ffcee2a8008abaa756acfd45dd710720c64ca8c8ce3`,
+identical to repository introduction commit
+`2a3aae4f7d1fcb3cfe69c9c6203cffe0abbb4087`. Its implementation says v14 and
+headers say v13; neither identifies a verified upstream SDK release.
+
+`PA_SetStringInArray` accepts only ArrayUnicode with non-null data,
+index >= 0 and <= element count, and non-null descriptor pointer. It disposes
+the old element then shallow-assigns the incoming descriptor. Rejection retains
+the caller owner; index zero is accepted. `PA_GetStringInArray` borrows.
+`PA_SetStringVariable` and `PA_SetPictureVariable` shallow-assign without releasing
+old contents; Undefined destinations avoid overwriting initial allocated owners.
+`PA_SetUnistring`/`PA_ReturnString` instead forward to the content-setting engine
+operation. Picture duplication with retainOnly=1 retains the input.
+
+The picture callbacks are synchronous procedure commands. Their return is
+normally Undefined; command argument-handle allocation failure returns raw
+kind zero (misleadingly normalized to Unistring by `PA_GetVariableKind`).
+That sentinel must not be cleared as an owned string. Method allocation
+failure instead returns Undefined. The regression checks both actual SDK paths.
+
+### Isolated regression and limits
+
+On macOS with Apple clang and the platform frameworks, run without native
+project build phases:
+
+```sh
+python3 -B tests/ownership/preserve.py
+python3 -B tests/ownership/run.py --output /absolute/temporary/output
+```
+
+The harness compiles actual production sources, all wrappers and the FULL
+UNCHANGED SDK. Only engine callback operations and dispatcher libc I/O are
+stubbed; no real file, device or network input is opened. Exact ASCII, BMP,
+supplementary and empty content, allocated/null empties, capacity/termination,
+bytes-to-units conversion, array independence/replacement/shrink/clear/rejections,
+borrowed copies, callback input/output lifetimes, failed poisoned picture-data
+outputs and owning handoff survival are checked with ASan/UBSan and explicit
+string/handle/picture balances. LeakSanitizer is unavailable on macOS; allocation
+balance checks are not a claim of whole-process leak coverage.
+
+The same harness accepts `--source` pointing to an immutable `git archive`
+extraction of the baseline and `--expect-baseline-fail` to require the exact
+named defect failures. The unsigned Ownership tests workflow also runs the
+baseline differential and existing lifecycle tests; it does not sign, package,
+upload artifacts, publish binaries, dispatch releases or alter manual workflows.
+
+Deferred: ambiguous `PA_GetPictureData` string and SDK-only app-path ownership,
+pointer metadata, initial array creation failure (the existing void wrapper
+has no reliable error/preservation boundary), and SDK resize-OOM count
+corruption. Normal-array tests do not certify OOM handling. No silent fallback,
+SDK rewrite or blanket disposal removal was introduced. Existing unrelated IO
+placeholder path/mode behavior and broad dispatcher exception swallowing are
+unchanged. This is macOS synthetic-engine evidence, not execution in real 4D
+or Windows and not certification of the original Poppler crash.
+
 ## Manual versioning and publication
 
 Run **Bump version** manually with `patch`, `minor`, or `major`, selecting an
